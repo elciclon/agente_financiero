@@ -5,13 +5,11 @@ from typing import List, Dict, Set
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from file_utils import cargar_lista_cedears
-from config import GURUS, CEDEARS_FILE, USER_AGENT, TIMEOUT_SECONDS
+from config import GURUS, CEDEARS_FILE, USER_AGENT, configurar_logging
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
-)
+TIMEOUT_SECONDS = 10
+
+configurar_logging()
 logger = logging.getLogger("clonador")
 
 
