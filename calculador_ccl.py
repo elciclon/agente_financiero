@@ -4,6 +4,7 @@ import sys
 from typing import Dict, List, Optional, Tuple
 
 import duckdb
+import pandas as pd
 import requests
 import yfinance as yf
 from dotenv import load_dotenv
@@ -114,12 +115,16 @@ def calcular_ccl_por_fecha(
 
 
 def almacenar_ccl(conexion: duckdb.DuckDBPyConnection, registros: List[Tuple[str, float]]) -> None:
-    conexion.executemany(
+    if not registros:
+        return
+    df = pd.DataFrame(registros, columns=["fecha", "ccl"])
+    df["fecha"] = pd.to_datetime(df["fecha"]).dt.date
+    # DuckDB puede leer el DataFrame 'df' directamente usando SQL
+    conexion.execute(
         f"""
         INSERT OR IGNORE INTO {TABLA} (fecha, ccl)
-        VALUES (?, ?)
-        """,
-        registros,
+        SELECT fecha, ccl FROM df
+        """
     )
     conexion.commit()
     logger.info(f"Registros almacenados en '{TABLA}': {len(registros)}")
