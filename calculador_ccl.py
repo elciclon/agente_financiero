@@ -7,6 +7,7 @@ import duckdb
 import requests
 import yfinance as yf
 from dotenv import load_dotenv
+from tqdm import tqdm
 
 from config import configurar_logging
 
@@ -132,9 +133,23 @@ def main() -> None:
         fecha_desde = obtener_ultima_fecha(conexion)
         if fecha_desde:
             logger.info(f"Última fecha en base: {fecha_desde}. Actualizando solo días nuevos.")
-        historial_local = obtener_historial("GGAL.BA", fecha_desde)
-        historial_adr = obtener_historial("GGAL", fecha_desde)
-        registros = calcular_ccl_por_fecha(historial_local, historial_adr)
+        historiales: Dict[str, Dict[str, float]] = {}
+        with tqdm(
+            total=2,
+            desc="Obteniendo historiales",
+            unit="ticker",
+            ncols=100,
+            miniters=1,
+            mininterval=0.05,
+            file=sys.stdout,
+        ) as barra:
+            for ticker in ["GGAL.BA", "GGAL"]:
+                barra.set_description(f"Obteniendo historial de {ticker}")
+                historiales[ticker] = obtener_historial(ticker, fecha_desde)
+                barra.update(1)
+            barra.n = barra.total
+            barra.refresh()
+        registros = calcular_ccl_por_fecha(historiales["GGAL.BA"], historiales["GGAL"])
         if not registros:
             logger.error("No se pudo calcular CCL: no hay registros de cotización disponibles.")
             sys.exit(1)
